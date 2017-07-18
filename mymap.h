@@ -10,9 +10,29 @@
 
 #include <sys/mman.h>
 
+/* Return codes ------------------------------------------------------------- */
+#define MYMAP_OK				((int)0)
+#define MYMAP_ERR				((int)-1)	/* Unspecified error */
+
+/* Memory region flags ------------------------------------------------------ */
+#define MYMAP_READ				(1 << 0)	/* Marks readable region */
+#define MYMAP_WRITE				(1 << 1)	/* Marks writable region */
+#define MYMAP_EXEC				(1 << 2)	/* Marks executable region */
+
 /* Exported types ----------------------------------------------------------- */
+typedef struct map_region_s map_region_t;
+
+struct map_region_s {
+	void *paddr; /* Physical address of the first byte inside the region */
+	void *vaddr; /* Virtual address of the first byte inside the region */
+	unsigned int size; /* Size of the memory region */
+	unsigned int flags; /* Memory region flags */
+	map_region_t *left; /* Left child in red-black tree */
+	map_region_t *right; /* Right child in red-black tree */
+};
+
 typedef struct {
-	/* TODO: Implement map_t */
+	map_region_t *root;	/* Root of red-black tree of mapped areas */
 } map_t;
 
 /* Exported functions ------------------------------------------------------- */
