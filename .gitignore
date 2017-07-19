@@ -56,3 +56,5 @@ dkms.conf
 .project
 .settings
 
+# Build directories
+*/build/

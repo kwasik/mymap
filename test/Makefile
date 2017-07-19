@@ -39,7 +39,7 @@ VPATH = $(SRCPATHS)
 
 .PHONY: clean
 
-$(PROJECT): $(OBJS) 
+$(BUILDDIR)/$(PROJECT): $(OBJS)
 	@echo "Linking..."
 	@$(LD) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 
@@ -51,5 +51,4 @@ $(BUILDDIR):
 	@mkdir $(BUILDDIR)
 	
 clean:
-	@rm -f $(PROJECT)
 	@rm -rf build
