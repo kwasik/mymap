@@ -8,10 +8,13 @@
 #include "rbtree.h"
 #include <stdbool.h>
 #include <string.h>
+#include <stdint.h>
 
 /* Private macros ----------------------------------------------------------- */
 #define IS_RED(node)        ((node != NULL) && (node->color == RB_RED))
 #define IS_BLACK(node)      ((node != NULL) && (node->color == RB_BLACK))
+
+#define MAX_UTF8_CHAR_SIZE  (4)
 
 /* Private functions -------------------------------------------------------- */
 int _rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element),
@@ -110,18 +113,19 @@ int rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element)) {
 int _rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element),
         char *prefix, bool is_tail) {
     char *new_prefix;
-    size_t prefix_length = strlen(prefix);
 
-    /* Allocate memory for new prefix and copy the old part */
-    new_prefix = RB_MALLOC(strlen(prefix) + 5);
+    /* Allocate memory for the new prefix (we'll add up to four utf8 characters
+     * and a null character) */
+    new_prefix = RB_MALLOC(strlen(prefix) + 4*MAX_UTF8_CHAR_SIZE
+            + sizeof(char));
     if (new_prefix == NULL) return RB_ALLOC_ERR;
-    strcpy(new_prefix, prefix);
 
     /* Print right subtree */
+    strcpy(new_prefix, prefix);
     if (is_tail) {
-        strcpy(new_prefix + prefix_length, "│   ");
+        strcat(new_prefix, "│   ");
     } else {
-        strcpy(new_prefix + prefix_length, "    ");
+        strcat(new_prefix, "    ");
     }
     if (subtree->right != NULL) {
         _rb_print_subtree(subtree->right, print_element, new_prefix, false);
@@ -149,10 +153,11 @@ int _rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element),
     RB_PRINTF("\n");
 
     /* Print left subtree */
+    strcpy(new_prefix, prefix);
     if (is_tail) {
-        strcpy(new_prefix + prefix_length, "    ");
+        strcat(new_prefix, "    ");
     } else {
-        strcpy(new_prefix + prefix_length, "│   ");
+        strcat(new_prefix, "│   ");
     }
     if (subtree->left != NULL) {
         _rb_print_subtree(subtree->left, print_element, new_prefix, true);
