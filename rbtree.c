@@ -169,6 +169,34 @@ int _rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element),
 }
 
 int rb_left_rotate(rb_tree_t *t, rb_node_t *node) {
+    rb_node_t *x = node, *y = node->right;
+
+    /*
+     * Rotate left:
+     *
+     *    |            |
+     *    x            y
+     *   / \          / \
+     *  A   y    ->  x   C
+     *     / \      / \
+     *    B   C    A   B
+     */
+
+#warning Check implementation of left rotation
+
+    x->right = y.left;
+    if (y.left != NULL) y->left->parent = x;
+    y->parent = x->parent;
+    if (x.parent == NULL) {
+        t.root = y;
+    } else if (x == x->parent->left) {
+        x->parent->left = y;
+    } else {
+        x->parent->right = y;
+    }
+    y->left = x;
+    x->parent = y;
+
     return RB_ERR;
 }
 
