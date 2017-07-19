@@ -134,6 +134,17 @@ int _rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element),
     } else {
         RB_PRINTF("┌── ");
     }
+    switch(subtree->color) {
+    case RB_RED:
+        RB_PRINTF("r: ");
+        break;
+    case RB_BLACK:
+        RB_PRINTF("b: ");
+        break;
+    default:
+        RB_PRINTF("?: ");
+        break;
+    }
     if (print_element != NULL) print_element(subtree->element);
     RB_PRINTF("\n");
 
