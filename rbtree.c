@@ -7,6 +7,7 @@
 
 #include "rbtree.h"
 #include <stdbool.h>
+#include <string.h>
 
 /* Private macros ----------------------------------------------------------- */
 #define IS_RED(node)        ((node != NULL) && (node->color == RB_RED))
@@ -96,7 +97,7 @@ int rb_insert_fixup(rb_tree_t *t, rb_node_t *node) {
         }
     }
 
-    t->root = RB_BLACK;
+    t->root->color = RB_BLACK;
 
     return RB_OK;
 }
@@ -112,7 +113,7 @@ int _rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element),
     size_t prefix_length = strlen(prefix);
 
     /* Allocate memory for new prefix and copy the old part */
-    new_prefix = malloc(strlen(prefix) + 5);
+    new_prefix = RB_MALLOC(strlen(prefix) + 5);
     if (new_prefix == NULL) return RB_ALLOC_ERR;
     strcpy(new_prefix, prefix);
 
@@ -123,18 +124,18 @@ int _rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element),
         strcpy(new_prefix + prefix_length, "    ");
     }
     if (subtree->right != NULL) {
-        _rb_print_subtree(subtree->right, new_prefix, false);
+        _rb_print_subtree(subtree->right, print_element, new_prefix, false);
     }
 
     /* Print current element */
-    printf("%s", prefix);
+    RB_PRINTF("%s", prefix);
     if (is_tail) {
-        printf("└── ");
+        RB_PRINTF("└── ");
     } else {
-        printf("┌── ");
+        RB_PRINTF("┌── ");
     }
     if (print_element != NULL) print_element(subtree->element);
-    printf("\n");
+    RB_PRINTF("\n");
 
     /* Print left subtree */
     if (is_tail) {
@@ -143,10 +144,10 @@ int _rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element),
         strcpy(new_prefix + prefix_length, "│   ");
     }
     if (subtree->left != NULL) {
-        _rb_print_subtree(subtree->left, new_prefix, true);
+        _rb_print_subtree(subtree->left, print_element, new_prefix, true);
     }
 
-    free(new_prefix);
+    RB_FREE(new_prefix);
 
     return RB_OK;
 }

@@ -7,6 +7,14 @@
 
 #include <stddef.h>
 
+/* Settings ----------------------------------------------------------------- */
+#include <stdlib.h>
+#define RB_MALLOC(size)         malloc(size)
+#define RB_FREE(ptr)            free(ptr)
+
+#include <stdio.h>
+#define RB_PRINTF(...)          printf(__VA_ARGS__)
+
 /* Return codes ------------------------------------------------------------- */
 #define RB_OK                   (0)
 #define RB_ERR                  (-1) /* Unspecified error */
