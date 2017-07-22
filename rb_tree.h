@@ -44,11 +44,16 @@ struct rb_node_s {
 
 typedef struct {
     rb_node_t *root;
-    int (*compare)(rb_node_t*, rb_node_t*);
 } rb_tree_t;
 
 /* Exported functions ------------------------------------------------------- */
-int rb_init(rb_tree_t *t, int (*compare)(rb_node_t*, rb_node_t*));
+/**
+ *
+ * @param t
+ * @param compare
+ * @return
+ */
+int rb_init(rb_tree_t *t);
 int rb_insert_fixup(rb_tree_t *t, rb_node_t *node);
 int rb_delete(rb_tree_t *t, rb_node_t *node);
 int rb_delete_fixup(rb_tree_t *t, rb_node_t *node);

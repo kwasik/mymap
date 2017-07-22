@@ -25,11 +25,10 @@ static int rb_transplant(rb_tree_t *t, rb_node_t *u, rb_node_t *v);
 static rb_node_t* rb_minimum(rb_node_t *node);
 
 /* Exported functions ------------------------------------------------------- */
-int rb_init(rb_tree_t *t, int (*compare)(rb_node_t*, rb_node_t*)) {
+int rb_init(rb_tree_t *t) {
     if (t == NULL) return RB_NULL_PARAM;
 
     t->root = NULL;
-    t->compare = compare;
 
     return RB_OK;
 }
