@@ -50,4 +50,21 @@ typedef struct {
 /* Exported functions ------------------------------------------------------- */
 int rb_init(rb_tree_t *t, int (*compare)(rb_node_t*, rb_node_t*));
 int rb_insert_fixup(rb_tree_t *t, rb_node_t *node);
+int rb_delete(rb_tree_t *t, rb_node_t *node);
+int rb_delete_fixup(rb_tree_t *t, rb_node_t *node);
+
+/**
+ * Returns first node in depth-first in-order traversal
+ * @param t Pointer to the tree
+ * @return Pointer to the first node
+ */
+rb_node_t* rb_first(rb_tree_t *t);
+
+/**
+ * Returns next node in depth-first in-order traversal
+ * @param node Current node
+ * @return Pointer to the next node or NULL if current node is the last
+ */
+rb_node_t* rb_next(rb_node_t *node);
+
 int rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element));
