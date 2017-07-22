@@ -11,28 +11,28 @@
 #include <sys/mman.h>
 
 /* Return codes ------------------------------------------------------------- */
-#define MYMAP_OK				((int)0)
-#define MYMAP_ERR				((int)-1)	/* Unspecified error */
+#define MYMAP_OK                ((int)0)
+#define MYMAP_ERR               ((int)-1)	/* Unspecified error */
 
 /* Memory region flags ------------------------------------------------------ */
-#define MYMAP_READ				(1 << 0)	/* Marks readable region */
-#define MYMAP_WRITE				(1 << 1)	/* Marks writable region */
-#define MYMAP_EXEC				(1 << 2)	/* Marks executable region */
+#define MYMAP_READ              (1 << 0)	/* Marks readable region */
+#define MYMAP_WRITE             (1 << 1)	/* Marks writable region */
+#define MYMAP_EXEC              (1 << 2)	/* Marks executable region */
 
 /* Exported types ----------------------------------------------------------- */
 typedef struct map_region_s map_region_t;
 
 struct map_region_s {
-	void *paddr; /* Physical address of the first byte inside the region */
-	void *vaddr; /* Virtual address of the first byte inside the region */
-	unsigned int size; /* Size of the memory region */
-	unsigned int flags; /* Memory region flags */
-	map_region_t *left; /* Left child in red-black tree */
-	map_region_t *right; /* Right child in red-black tree */
+    void *paddr; /* Physical address of the first byte inside the region */
+    void *vaddr; /* Virtual address of the first byte inside the region */
+    unsigned int size; /* Size of the memory region */
+    unsigned int flags; /* Memory region flags */
+    map_region_t *left; /* Left child in red-black tree */
+    map_region_t *right; /* Right child in red-black tree */
 };
 
 typedef struct {
-	map_region_t *root;	/* Root of red-black tree of mapped areas */
+    map_region_t *root; /* Root of red-black tree of mapped areas */
 } map_t;
 
 /* Exported functions ------------------------------------------------------- */
@@ -63,7 +63,7 @@ int mymap_dump(map_t *map);
  * @return Address the region was mapped to.
  */
 void *mymap_mmap(map_t *map, void *vaddr, unsigned int size, unsigned int flags,
-		void *o);
+        void *o);
 
 /**
  * Unmaps region containing address passed as a parameter.
