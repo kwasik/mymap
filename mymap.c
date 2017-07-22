@@ -8,33 +8,32 @@
 #include "mymap.h"
 #include "stddef.h"
 
-/* Private functions -------------------------------------------------------- */
-mymap_get_unmapped_area(map_t *map, void *vaddr, unsigned int size);
-
 /* Exported functions ------------------------------------------------------- */
 int mymap_init(map_t *map) {
-    return MYMAP_ERR;
+    if (map == NULL) return MYMAP_ERR;
+
+    /* Initialize red-black tree of mapped regions */
+    if (rb_init(&map->rb_tree) != RB_OK) return MYMAP_ERR;
+
+    return MYMAP_OK;
 }
 
 int mymap_dump(map_t *map) {
     return MYMAP_ERR;
 }
 
-/* TODO: How to distinguish between mapping to address 0x0 and returning error
- * (NULL pointer)? */
 void *mymap_mmap(map_t *map, void *vaddr, unsigned int size, unsigned int flags,
         void *o) {
 
-    if (map == NULL) return NULL;
+    if (map == NULL) return MYMAP_FAILED;
 
-    /* Make sure suggested address is inside the address space */
-    if (vaddr < map->mend) return NULL;
+    if (RB_EMPTY(map->rb_tree)) {
 
-    if (RB_EMPTY(map->root)) {
         /* This will be the first region in the address space, so we can map it
-         * precisely to the suggested address */
+         * to the suggested address */
         if (vaddr != NULL) {
             // ...
+
         } else {
             /* Suggested address was not provided, map to the beginning of the
              * address space */
@@ -43,8 +42,21 @@ void *mymap_mmap(map_t *map, void *vaddr, unsigned int size, unsigned int flags,
     }
 
     // ...
+
+    return MYMAP_FAILED;
 }
 
 void mymap_munmap(map_t *map, void *vaddr) {
+    rb_node_t *node;
+    map_region_t *region;
 
+    if (map == NULL) return;
+
+    /* Find region this address belongs to */
+    // ...
+
+    /* Remove region from the tree */
+    rb_delete(map->rb_tree, node);
+    MYMAP_FREE(node);
+    MYMAP_FREE(region);
 }

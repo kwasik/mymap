@@ -8,11 +8,21 @@
 #ifndef MYMAP_H_
 #define MYMAP_H_
 
-#include <sys/mman.h>
+#include "rb_tree.h"
+
+/* Settings ----------------------------------------------------------------- */
+#include <stdlib.h>
+#define MYMAP_MALLOC(size)      malloc(size)
+#define MYMAP_FREE(ptr)         free(ptr)
+
+/* Base of the virtual address space (smallest available address) */
+#define MYMAP_VA_BASE           (0x00001000)
 
 /* Return codes ------------------------------------------------------------- */
-#define MYMAP_OK                ((int)0)
-#define MYMAP_ERR               ((int)-1)	/* Unspecified error */
+#define MYMAP_OK                (0)
+#define MYMAP_ERR               (-1)    /* Unspecified error */
+
+#define MYMAP_FAILED            ((void*)MYMAP_ERR)
 
 /* Memory region flags ------------------------------------------------------ */
 #define MYMAP_READ              (1 << 0)	/* Marks readable region */
@@ -32,10 +42,7 @@ struct map_region_s {
 };
 
 typedef struct {
-    map_region_t *root; /* Root of red-black tree of mapped areas */
-    void *mstart; /* Lowest address in the virtual address space */
-    void *mend; /* Lowest address that is greater than all addresses in virtual
-                 * address space */
+    rb_tree_t rb_tree; /* Red-black tree of mapped areas */
 } map_t;
 
 /* Exported functions ------------------------------------------------------- */
@@ -43,14 +50,14 @@ typedef struct {
 /**
  * Initializes map.
  * @param map Pointer to the map instance.
- * @return Returns zero if function succeeds. Otherwise returns error code.
+ * @return Returns zero if operation succeeds. Otherwise returns error code.
  */
 int mymap_init(map_t *map);
 
 /**
  * Dumps structure of the map in human-readable format to stdout.
  * @param map Pointer to the map instance.
- * @return Returns zero if function succeeds. Otherwise returns error code.
+ * @return Returns zero if operation succeeds. Otherwise returns error code.
  */
 int mymap_dump(map_t *map);
 
@@ -63,7 +70,8 @@ int mymap_dump(map_t *map);
  * @param size Size of the mapped region.
  * @param flags Mapping attributes.
  * @param o Address of the beginning of the mapped region.
- * @return Address the region was mapped to.
+ * @return On success, returns address the region was mapped. On failure,
+ * MYMAP_FAILED is returned.
  */
 void *mymap_mmap(map_t *map, void *vaddr, unsigned int size, unsigned int flags,
         void *o);
