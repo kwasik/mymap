@@ -19,7 +19,6 @@ BUILDDIR = build
 
 # Source files
 SRC = main.c \
-	  $(MAIN_DIR)/mymap.c \
 	  $(MAIN_DIR)/rb_tree.c
 
 # Include dirs
@@ -37,7 +36,7 @@ SRCPATHS = $(dir $(SRC))
 
 VPATH = $(SRCPATHS)
 
-.PHONY: clean
+.PHONY: clean test
 
 $(BUILDDIR)/$(PROJECT): $(OBJS)
 	@echo "Linking..."
@@ -52,3 +51,7 @@ $(BUILDDIR):
 	
 clean:
 	@rm -rf build
+	
+test:
+	@echo "Running tests...\n"
+	@./$(BUILDDIR)/$(PROJECT)
