@@ -169,9 +169,12 @@ int _rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element),
 }
 
 int rb_left_rotate(rb_tree_t *t, rb_node_t *node) {
-    rb_node_t *x = node, *y = node->right;
+    rb_node_t *x = node, *y;
 
-    /* TODO: Check pointers for null before dereferencing */
+    if (x == NULL || t == NULL) return RB_NULL_PARAM;
+
+    /* Selected node has to have right child to rotate left */
+    if (x->right == NULL) return RB_CANT_ROTATE;
 
     /*
      * Rotate left:
@@ -183,7 +186,7 @@ int rb_left_rotate(rb_tree_t *t, rb_node_t *node) {
      *     / \        / \
      *    B   C      A   B
      */
-
+    y = x->right;
     x->right = y->left;
     if (y->left != NULL) y->left->parent = x;
     y->parent = x->parent;
@@ -201,9 +204,12 @@ int rb_left_rotate(rb_tree_t *t, rb_node_t *node) {
 }
 
 int rb_right_rotate(rb_tree_t *t, rb_node_t *node) {
-    rb_node_t *x = node, *y = node->left;
+    rb_node_t *x = node, *y;
 
-    /* TODO: Check pointers for null before dereferencing */
+    if (x == NULL || t == NULL) return RB_NULL_PARAM;
+
+    /* Selected node has to have left child to rotate right */
+    if (x->left == NULL) return RB_CANT_ROTATE;
 
     /*
      * Rotate right:
@@ -215,7 +221,7 @@ int rb_right_rotate(rb_tree_t *t, rb_node_t *node) {
      *   / \            / \
      *  A   B          B   C
      */
-
+    y = x->left;
     x->left = y->right;
     if (y->right != NULL) y->right->parent = x;
     y->parent = x->parent;

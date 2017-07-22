@@ -21,6 +21,10 @@
 #define RB_ALLOC_ERR            (-2) /* Memory allocation error */
 #define RB_NULL_PARAM           (-3) /* Null parameter error */
 #define RB_INTERNAL_ERR         (-4) /* Internal error */
+#define RB_CANT_ROTATE          (-5) /* Cannot rotate on selected node */
+
+/* Exported macros and definitions ------------------------------------------ */
+#define RB_EMPTY(tree)          ((tree)->root == NULL)
 
 /* Exported types ----------------------------------------------------------- */
 typedef enum {
