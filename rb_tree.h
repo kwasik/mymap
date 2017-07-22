@@ -48,28 +48,50 @@ typedef struct {
 
 /* Exported functions ------------------------------------------------------- */
 /**
- *
- * @param t
- * @param compare
- * @return
+ * Initializes red-black tree.
+ * @param t Pointer to the tree instance
+ * @return Returns zero on success and error code otherwise
  */
 int rb_init(rb_tree_t *t);
-int rb_insert_fixup(rb_tree_t *t, rb_node_t *node);
-int rb_delete(rb_tree_t *t, rb_node_t *node);
-int rb_delete_fixup(rb_tree_t *t, rb_node_t *node);
 
 /**
- * Returns first node in depth-first in-order traversal
+ * Modifies tree so that it becomes a red-black tree again after inserting new
+ * node. Node should be inserted according to rules imposed on binary search
+ * trees.
+ * @param t Pointer to the tree instance
+ * @param node Pointer to the inserted node
+ * @return Returns zero on success and error code otherwise
+ */
+int rb_insert_fixup(rb_tree_t *t, rb_node_t *node);
+
+/**
+ * Removes node and modifies the tree so it still is a valid red-black
+ * tree.
+ * @param t Pointer to the tree instance
+ * @param node Pointer to the node to remove
+ * @return Returns zero on success and error code otherwise
+ */
+int rb_delete(rb_tree_t *t, rb_node_t *node);
+
+/**
+ * Returns first node in depth-first in-order traversal.
  * @param t Pointer to the tree
- * @return Pointer to the first node
+ * @return Pointer to the first node or NULL if the tree is empty
  */
 rb_node_t* rb_first(rb_tree_t *t);
 
 /**
- * Returns next node in depth-first in-order traversal
+ * Returns next node in depth-first in-order traversal.
  * @param node Current node
  * @return Pointer to the next node or NULL if current node is the last
  */
 rb_node_t* rb_next(rb_node_t *node);
 
+/**
+ * Prints subtree in human-readable form
+ * @param subtree Pointer to the root of the subtree
+ * @param print_element Pointer to the function that will be used to print
+ * elements stored in the tree
+ * @return Returns zero on success and error code otherwise
+ */
 int rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element));
