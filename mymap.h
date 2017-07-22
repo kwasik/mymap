@@ -25,7 +25,7 @@ typedef struct map_region_s map_region_t;
 struct map_region_s {
     void *paddr; /* Physical address of the first byte inside the region */
     void *vaddr; /* Virtual address of the first byte inside the region */
-    unsigned int size; /* Size of the memory region */
+    void *vend; /* Virtual address of the first byte after the region */
     unsigned int flags; /* Memory region flags */
     map_region_t *left; /* Left child in red-black tree */
     map_region_t *right; /* Right child in red-black tree */
@@ -33,6 +33,9 @@ struct map_region_s {
 
 typedef struct {
     map_region_t *root; /* Root of red-black tree of mapped areas */
+    void *mstart; /* Lowest address in the virtual address space */
+    void *mend; /* Lowest address that is greater than all addresses in virtual
+                 * address space */
 } map_t;
 
 /* Exported functions ------------------------------------------------------- */
