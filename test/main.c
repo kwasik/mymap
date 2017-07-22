@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "rbtree.h"
+#include "rb_tree.h"
 
 void print_uint(void *num) {
     printf("%u", *((unsigned int*)num));

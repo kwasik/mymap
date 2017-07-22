@@ -20,7 +20,7 @@ BUILDDIR = build
 # Source files
 SRC = main.c \
 	  $(MAIN_DIR)/mymap.c \
-	  $(MAIN_DIR)/rbtree.c
+	  $(MAIN_DIR)/rb_tree.c
 
 # Include dirs
 INCDIRS = $(MAIN_DIR)

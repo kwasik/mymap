@@ -5,7 +5,7 @@
  *      Author: krystian
  */
 
-#include "rbtree.h"
+#include "rb_tree.h"
 #include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
