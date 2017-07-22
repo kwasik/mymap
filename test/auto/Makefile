@@ -12,7 +12,7 @@ LDFLAGS =
 PROJECT = test
 
 # Main directory
-MAIN_DIR = ..
+MAIN_DIR = ../..
 
 # Build directory
 BUILDDIR = build
@@ -52,6 +52,6 @@ $(BUILDDIR):
 clean:
 	@rm -rf build
 	
-test:
+test: $(BUILDDIR)/$(PROJECT)
 	@echo "Running tests...\n"
 	@./$(BUILDDIR)/$(PROJECT)
