@@ -26,6 +26,16 @@
 /* Exported macros and definitions ------------------------------------------ */
 #define RB_EMPTY(tree)          ((tree)->root == NULL)
 
+#define RB_ELEMENT(node, type)  ((type*)node->element)
+
+#define RB_LINK_LEFT(_parent, _child)                                       \
+    _parent->left = _child;                                                 \
+    _child->parent = _parent;
+
+#define RB_LINK_RIGHT(_parent, _child)                                      \
+    _parent->right = _child;                                                \
+    _child->parent = _parent;
+
 /* Exported types ----------------------------------------------------------- */
 typedef enum {
     RB_RED,
@@ -53,6 +63,13 @@ typedef struct {
  * @return Returns zero on success and error code otherwise
  */
 int rb_init(rb_tree_t *t);
+
+/**
+ * Initializes node of red-black tree.
+ * @param node Pointer to the node
+ * @param element Pointer to the element to store in the node
+ */
+void rb_node_init(rb_node_t *node, void *element);
 
 /**
  * Modifies tree so that it becomes a red-black tree again after inserting new
@@ -86,6 +103,30 @@ rb_node_t* rb_first(rb_tree_t *t);
  * @return Pointer to the next node or NULL if current node is the last
  */
 rb_node_t* rb_next(rb_node_t *node);
+
+/**
+ * Returns previous node in depth-first in-order traversal.
+ * @param node Current node
+ * @return Pointer to the previous node or NULL if current node is the first
+ */
+rb_node_t* rb_previous(rb_node_t *node);
+
+/**
+ * Searches for a given key in the tree
+ * @param t Pointer to the tree
+ * @param element Pointer to the key to search for
+ * @param compare Compare function accepting two parameters, key and element
+ * stored in a tree node. Defines the order of elements by returning -1, 0 or 1
+ * if the key is lesser, equal or greater than the element stored in the node,
+ * respectively
+ * @param result Pointer to place where the result of last comparison will be
+ * stored
+ * @return Pointer to the node with element equal to the key. If there is no
+ * such an element in the tree, returns pointer to the node it should be
+ * attached to. May return NULL if an error occurs or if the tree is empty.
+ */
+rb_node_t* rb_search(rb_tree_t *t, void *key, int (*compare)(void*, void*),
+        int *result);
 
 /**
  * Prints subtree in human-readable form

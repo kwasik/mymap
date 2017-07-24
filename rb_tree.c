@@ -34,6 +34,20 @@ int rb_init(rb_tree_t *t) {
     return RB_OK;
 }
 
+void rb_node_init(rb_node_t *node, void *element) {
+
+    if (node == NULL) return;
+
+    /* Nodes of red-black tree are red by default */
+    node->color = RB_RED;
+
+    node->element = element;
+
+    node->parent = NULL;
+    node->left = NULL;
+    node->right = NULL;
+}
+
 int rb_insert_fixup(rb_tree_t *t, rb_node_t *node) {
     rb_node_t *z = node, *y;
 
@@ -163,7 +177,7 @@ rb_node_t* rb_next(rb_node_t *node) {
 
     if (node == NULL) return NULL;
 
-    /* If right subtree is not empty of current node, then that's where we
+    /* If right subtree of current node is not empty, then that's where we
      * should look for the next element. More precisely, we have to move to the
      * right child and then as far left as possible. */
     if (node->right != NULL) {
@@ -179,6 +193,62 @@ rb_node_t* rb_next(rb_node_t *node) {
         node = node->parent;
     }
     return node->parent;
+}
+
+rb_node_t* rb_previous(rb_node_t *node) {
+
+    if (node == NULL) return NULL;
+
+    /* If left subtree of current node is not empty, then that's where we
+     * should look for the previous element. More precisely, we have to move to
+     * the left child and then as far right as possible. */
+    if (node->left != NULL) {
+        node = node->left;
+        while (node->right != NULL) node = node->right;
+        return node;
+    }
+
+    /* Left subtree is empty. Go up until we find a node that is a right
+     * child of it's parent. Parent of such a node is the one we're looking
+     * for. */
+    while (node->parent != NULL && node->parent->left == node) {
+        node = node->parent;
+    }
+    return node->parent;
+}
+
+rb_node_t* rb_search(rb_tree_t *t, void *key, int (*compare)(void*, void*),
+        int *result) {
+    rb_node_t *current = NULL, *next;
+    int _result;
+
+    if (t == NULL || key == NULL || compare == NULL) return NULL;
+
+    next = t->root;
+    while (next != NULL) {
+        current = next;
+
+        /* Compare element stored in the current node with the key */
+        _result = compare(key, current->element);
+
+        if (_result < 0) {
+            /* Look in the left subtree */
+            next = current->left;
+
+        } else if (_result > 0) {
+            /* Look in right subtree */
+            next = current->right;
+
+        } else {
+            /* Found it */
+            break;
+        }
+    }
+
+    /* Return the result of the last comparison by parameter */
+    if (result != NULL) *result = _result;
+
+    return current;
 }
 
 int rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element)) {

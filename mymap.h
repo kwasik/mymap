@@ -16,7 +16,10 @@
 #define MYMAP_FREE(ptr)         free(ptr)
 
 /* Base of the virtual address space (smallest available address) */
-#define MYMAP_VA_BASE           (0x00001000)
+#define MYMAP_VA_BASE           ((void*)0x00000010)
+
+/* End (last address) of the virtual address space */
+#define MYMAP_VA_END            ((void*)0xfffffff0)
 
 /* Return codes ------------------------------------------------------------- */
 #define MYMAP_OK                (0)
@@ -37,8 +40,7 @@ struct map_region_s {
     void *vaddr; /* Virtual address of the first byte inside the region */
     void *vend; /* Virtual address of the first byte after the region */
     unsigned int flags; /* Memory region flags */
-    map_region_t *left; /* Left child in red-black tree */
-    map_region_t *right; /* Right child in red-black tree */
+    rb_node_t *rb_node; /* Node of a red-black tree this region is stored in */
 };
 
 typedef struct {
@@ -70,7 +72,7 @@ int mymap_dump(map_t *map);
  * @param size Size of the mapped region.
  * @param flags Mapping attributes.
  * @param o Address of the beginning of the mapped region.
- * @return On success, returns address the region was mapped. On failure,
+ * @return On success, returns address the region was mapped to. On failure,
  * MYMAP_FAILED is returned.
  */
 void *mymap_mmap(map_t *map, void *vaddr, unsigned int size, unsigned int flags,
