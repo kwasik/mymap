@@ -48,11 +48,6 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    /* Add some elements to map */
-    mymap_mmap(&map, (void*)0x100, 10, 0, (void*)0);
-    mymap_mmap(&map, (void*)0x200, 10, 0, (void*)0);
-    mymap_mmap(&map, (void*)0xf0, 10, 0, (void*)0);
-
     while (true) {
 
         /* Display command prompt */
