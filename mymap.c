@@ -28,6 +28,7 @@ static unsigned long mymap_get_gap_size(map_region_t *region,
         map_region_t* next, void *vaddr, void **_start);
 static bool mymap_insert_region(map_region_t *new, map_region_t *after,
         map_region_t *before);
+static void mymap_print_region(void *element);
 
 /* Exported functions ------------------------------------------------------- */
 int mymap_init(map_t *map) {
@@ -40,7 +41,14 @@ int mymap_init(map_t *map) {
 }
 
 int mymap_dump(map_t *map) {
-    /* TODO: Implement mymap_dump */
+
+    if (map == NULL) return MYMAP_ERR;
+
+    if (RB_EMPTY(&map->rb_tree)) {
+        MYMAP_PRINTF("The map is empty.\n");
+    } else {
+        rb_print_subtree(map->rb_tree.root, mymap_print_region);
+    }
 
     return MYMAP_ERR;
 }
@@ -195,6 +203,10 @@ static void* mymap_get_unmapped_area(map_t *map, void *vaddr, unsigned int size,
              * Move back to the previous region. */
             next = RB_ELEMENT(n, map_region_t);
             curr = RB_ELEMENT(rb_previous(n), map_region_t);
+
+        } else {
+            curr = RB_ELEMENT(n, map_region_t);
+            next = RB_ELEMENT(rb_next(n), map_region_t);
         }
 
     } else {
@@ -277,4 +289,11 @@ static bool mymap_insert_region(map_region_t *new, map_region_t *after,
     }
 
     return true;
+}
+
+static void mymap_print_region(void *element) {
+    map_region_t *r = (map_region_t*)element;
+
+    MYMAP_PRINTF("(paddr: %p, vaddr: %p, vend: %p, flags: %u)", r->paddr,
+            r->vaddr, r->vend, r->flags);
 }

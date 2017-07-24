@@ -15,6 +15,9 @@
 #define MYMAP_MALLOC(size)      malloc(size)
 #define MYMAP_FREE(ptr)         free(ptr)
 
+#include <stdio.h>
+#define MYMAP_PRINTF(...)       printf(__VA_ARGS__)
+
 /* Base of the virtual address space (smallest available address) */
 #define MYMAP_VA_BASE           ((void*)0x00000010)
 
