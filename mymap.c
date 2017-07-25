@@ -25,12 +25,9 @@
 static int mymap_belongs_to_region(void *vaddr, void *region);
 
 /* TODO: Comment */
-static map_region_t* mymap_create_region(void *paddr, unsigned int flags);
 static void mymap_destroy_region(map_region_t *region);
 static inline void* mymap_check_last_gap(map_t *map, void *vaddr,
         unsigned long size);
-static void* mymap_get_unmapped_area(map_t *map, void *vaddr,
-        unsigned int size);
 static void mymap_print_region(void *element);
 
 /* Exported functions ------------------------------------------------------- */
@@ -133,20 +130,7 @@ void mymap_munmap(map_t *map, void *vaddr) {
     mymap_destroy_region(RB_ELEMENT(node, map_region_t));
 }
 
-/* Private functions -------------------------------------------------------- */
-static int mymap_belongs_to_region(void *vaddr, void *region) {
-    map_region_t *r = (map_region_t*)region;
-
-    if (vaddr < r->vaddr) {
-        return -1;
-    } else if (vaddr >= r->vend) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-static map_region_t* mymap_create_region(void *paddr, unsigned int flags) {
+map_region_t* mymap_create_region(void *paddr, unsigned int flags) {
     map_region_t *region;
     rb_node_t *node;
 
@@ -173,39 +157,18 @@ static map_region_t* mymap_create_region(void *paddr, unsigned int flags) {
     return region;
 }
 
-static void mymap_destroy_region(map_region_t *region) {
-    MYMAP_FREE(region->rb_node);
-    MYMAP_FREE(region);
-}
-
-static inline void* mymap_check_last_gap(map_t *map, void *vaddr,
-        unsigned long size) {
-    void *gap_start;
-
-    if (map == NULL) return MYMAP_FAILED;
-
-    gap_start = MYMAP_VA_END - map->last_gap + 1;
-
-    if (gap_start > vaddr && map->last_gap > size) {
-        return gap_start;
-    } else if (gap_start <= vaddr && (MYMAP_VA_END - vaddr + 1) > size) {
-        return vaddr;
-    } else {
-        return MYMAP_FAILED;
-    }
-}
-
-static void* mymap_get_unmapped_area(map_t *map, void *vaddr,
-        unsigned int size) {
+void* mymap_get_unmapped_area(map_t *map, void *vaddr, unsigned int size) {
     rb_node_t *curr;
 
     if (map == NULL) return MYMAP_FAILED;
 
-    if (RB_EMPTY(&map->rb_tree) || RB_MAX_GAP(map->rb_tree.root) < size)
+    if (RB_EMPTY(&map->rb_tree) || RB_MAX_GAP(map->rb_tree.root) < size) {
         /* If tree is empty or maximum gap size at the root is smaller than
          * requested size, then the last gap is our only chance */
         return mymap_check_last_gap(map, vaddr, size);
+    }
 
+    if (vaddr < MYMAP_VA_BASE) vaddr = MYMAP_VA_BASE;
 
     /* In the first phase we analyze parts of the tree where we have to watch
      * out both for maximum gap size in subtree and suggested virtual address.
@@ -223,7 +186,7 @@ static void* mymap_get_unmapped_area(map_t *map, void *vaddr,
 
                 /* There is no left subtree. Check if we can insert new region
                  * before the current one */
-                map_region_t *tmp = RB_ELEMENT(curr->left, map_region_t);
+                map_region_t *tmp = RB_ELEMENT(curr, map_region_t);
                 if (tmp->gap >= size && (tmp->vaddr - vaddr) >= size) {
                     return vaddr;
                 } else {
@@ -290,29 +253,29 @@ static void* mymap_get_unmapped_area(map_t *map, void *vaddr,
 
         /* Check if gap before current element is big enough */
         void *gap_start = (void*)(RB_VADDR(curr) - RB_GAP(curr));
-        if (gap_start > vaddr && RB_GAP(curr) > size) {
+        if (gap_start > vaddr && RB_GAP(curr) >= size) {
             return gap_start;
-        } else if (gap_start <= vaddr && (RB_VADDR(curr) - vaddr) > size) {
+        } else if (gap_start <= vaddr && (RB_VADDR(curr) - vaddr) >= size) {
             return vaddr;
         }
 
         /* Check if there is a gap big enough in the right subtree */
-        if (curr->right && RB_MAX_GAP(curr->right) > size) {
+        if (curr->right && RB_MAX_GAP(curr->right) >= size) {
 
             curr = curr->right;
             while (true) {
 
                 /* We want to get as close to suggested address as possible and
                  * therefore we should start with left subtree */
-                if (curr->left && RB_MAX_GAP(curr->left) > size) {
+                if (curr->left && RB_MAX_GAP(curr->left) >= size) {
                     curr = curr->left;
 
                 /* Check current element */
-                } else if (RB_GAP(curr) > size) {
+                } else if (RB_GAP(curr) >= size) {
                     return RB_VADDR(curr) - RB_GAP(curr);
 
                 /* Check right subtree as a last resort */
-                } else if (curr->right && RB_MAX_GAP(curr->left) > size) {
+                } else if (curr->right && RB_MAX_GAP(curr->right) >= size) {
                     curr = curr->right;
 
                 } else {
@@ -334,9 +297,44 @@ static void* mymap_get_unmapped_area(map_t *map, void *vaddr,
     return NULL;
 }
 
+/* Private functions -------------------------------------------------------- */
+static int mymap_belongs_to_region(void *vaddr, void *region) {
+    map_region_t *r = (map_region_t*)region;
+
+    if (vaddr < r->vaddr) {
+        return -1;
+    } else if (vaddr >= r->vend) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+static void mymap_destroy_region(map_region_t *region) {
+    MYMAP_FREE(region->rb_node);
+    MYMAP_FREE(region);
+}
+
+static inline void* mymap_check_last_gap(map_t *map, void *vaddr,
+        unsigned long size) {
+    void *gap_start;
+
+    if (map == NULL) return MYMAP_FAILED;
+
+    gap_start = MYMAP_VA_END - map->last_gap + 1;
+
+    if (gap_start > vaddr && map->last_gap > size) {
+        return gap_start;
+    } else if (gap_start <= vaddr && (MYMAP_VA_END - vaddr + 1) > size) {
+        return vaddr;
+    } else {
+        return MYMAP_FAILED;
+    }
+}
+
 static void mymap_print_region(void *element) {
     map_region_t *r = (map_region_t*)element;
 
-    MYMAP_PRINTF("(paddr: %p, vaddr: %p, vend: %p, flags: %u)", r->paddr,
-            r->vaddr, r->vend, r->flags);
+    MYMAP_PRINTF("(vaddr: %p, vend: %p, gap: %lu, max_gap: %lu)", r->vaddr,
+            r->vend, r->gap, r->max_gap);
 }

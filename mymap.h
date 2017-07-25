@@ -22,7 +22,7 @@
 #define MYMAP_VA_BASE           ((void*)0x00000010)
 
 /* End (last address) of the virtual address space */
-#define MYMAP_VA_END            ((void*)0xfffffff0)
+#define MYMAP_VA_END            ((void*)0x00001000)
 
 /* Return codes ------------------------------------------------------------- */
 #define MYMAP_OK                (0)
@@ -91,5 +91,24 @@ void *mymap_mmap(map_t *map, void *vaddr, unsigned int size, unsigned int flags,
  * @param vaddr Any address from the region to unmap.
  */
 void mymap_munmap(map_t *map, void *vaddr);
+
+/**
+ * Allocates and initializes region and tree node structures
+ * @param paddr Physical address of the region
+ * @param flags Memory region flags
+ * @return Pointer to the region structure if operation succeeds. Otherwise
+ * returns NULL.
+ */
+map_region_t* mymap_create_region(void *paddr, unsigned int flags);
+
+/**
+ * Searches the tree of regions to find a right place for a new region (gap big
+ * enough and virtual address greater or equal to suggested in parameter)
+ * @param map Pointer to the map instance
+ * @param vaddr Suggested virtual address
+ * @param size Size of the new region
+ */
+void* mymap_get_unmapped_area(map_t *map, void *vaddr,
+        unsigned int size);
 
 #endif /* MYMAP_H_ */
