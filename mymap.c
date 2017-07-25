@@ -28,11 +28,9 @@ static int mymap_belongs_to_region(void *vaddr, void *region);
 static map_region_t* mymap_create_region(void *paddr, unsigned int flags);
 static void mymap_destroy_region(map_region_t *region);
 static inline void* mymap_check_last_gap(map_t *map, void *vaddr,
+        unsigned long size);
+static void* mymap_get_unmapped_area(map_t *map, void *vaddr,
         unsigned int size);
-static void* mymap_get_unmapped_area(map_t *map, void *vaddr, unsigned int size,
-        map_region_t **after, map_region_t **before);
-static unsigned long mymap_get_gap_size(map_region_t *region,
-        map_region_t* next, void *vaddr, void **_start);
 static bool mymap_insert_region(map_region_t *new, map_region_t *after,
         map_region_t *before);
 static void mymap_print_region(void *element);
@@ -205,20 +203,28 @@ static inline void* mymap_check_last_gap(map_t *map, void *vaddr,
     }
 }
 
-static void* mymap_get_unmapped_area(map_t *map, void *vaddr, unsigned int size,
-        map_region_t **after, map_region_t **before) {
+static void* mymap_get_unmapped_area(map_t *map, void *vaddr,
+        unsigned int size) {
+    rb_node_t *curr;
 
-    /* TODO: Check parameters */
-    /* TODO: Check if tree is empty */
-    /* TODO: Check max_gap of the root */
+    if (map == NULL) return MYMAP_FAILED;
 
-    rb_node_t *curr = map->rb_tree->root;
+    if (RB_EMPTY(map->rb_tree) || RB_MAX_GAP(map->rb_tree.root) < size)
+        /* If tree is empty or maximum gap size at the root is smaller than
+         * requested size, then the last gap is our only chance */
+        return mymap_check_last_gap(map, vaddr, size);
+
 
     /* In the first phase we analyze parts of the tree where we have to watch
-     * out both for maximum gap size in subtree and suggested virtual address */
+     * out both for maximum gap size in subtree and suggested virtual address.
+     * We'll make sure that suggested address is located before current region
+     * before moving to the second phase. */
+    curr = map->rb_tree.root;
     while (true) {
+
         map_region_t *region = RB_ELEMENT(curr, map_region_t);
         int result = mymap_belongs_to_region(vaddr, region);
+
         if (result < 0) { /* vaddr is before the current region */
 
             if (curr->left == NULL) {
@@ -291,7 +297,7 @@ static void* mymap_get_unmapped_area(map_t *map, void *vaddr, unsigned int size,
     while (true) {
 
         /* Check if gap before current element is big enough */
-        unsigned long gap_start = RB_VADDR(curr) - RB_GAP(curr);
+        void *gap_start = (void*)(RB_VADDR(curr) - RB_GAP(curr));
         if (gap_start > vaddr && RB_GAP(curr) > size) {
             return gap_start;
         } else if (gap_start <= vaddr && (RB_VADDR(curr) - vaddr) > size) {
@@ -334,36 +340,6 @@ static void* mymap_get_unmapped_area(map_t *map, void *vaddr, unsigned int size,
     }
 
     return NULL;
-}
-
-static unsigned long mymap_get_gap_size(map_region_t *region,
-        map_region_t* next, void *vaddr, void **_start) {
-    void *start, *end;
-
-    /* Check if gap starts at the beginning of the address space or at the end
-     * of a region */
-    if (region != NULL) {
-        start = region->vend;
-    } else {
-        start = MYMAP_VA_BASE;
-    }
-
-    /* Check if gap ends at the beginning of the next region or at the end of
-     * the address space */
-    if (next != NULL) {
-        end = next->vaddr - 1;
-    } else {
-        end = MYMAP_VA_END;
-    }
-
-    /* Take into account the fact that the suggested address may be located
-     * inside the gap */
-    if (vaddr != NULL && vaddr > start) start = vaddr;
-
-    /* Return address of the beginning of the gap if requested */
-    if (_start != NULL) *_start = start;
-
-    return (unsigned long)(end - start) + 1;
 }
 
 static bool mymap_insert_region(map_region_t *new, map_region_t *after,

@@ -27,7 +27,7 @@
 #define RB_EMPTY(tree)          ((tree)->root == NULL)
 
 #define RB_ELEMENT(node, type)                                              \
-    (node != NULL)?((type*)node->element):((type*)NULL)
+    ((node != NULL)?((type*)(node)->element):((type*)NULL))
 
 #define RB_LINK_LEFT(_parent, _child)                                       \
     _parent->left = _child;                                                 \
