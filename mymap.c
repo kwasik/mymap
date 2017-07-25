@@ -9,6 +9,11 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+/* Private macros ----------------------------------------------------------- */
+#define RB_MAX_GAP(node)        RB_ELEMENT(node, map_region_t)->max_gap
+#define RB_GAP(node)            RB_ELEMENT(node, map_region_t)->gap
+#define RB_VADDR(node)          RB_ELEMENT(node, map_region_t)->vaddr
+
 /* Private functions -------------------------------------------------------- */
 /**
  * Checks if virtual address belongs to region
@@ -22,6 +27,8 @@ static int mymap_belongs_to_region(void *vaddr, void *region);
 /* TODO: Comment */
 static map_region_t* mymap_create_region(void *paddr, unsigned int flags);
 static void mymap_destroy_region(map_region_t *region);
+static inline void* mymap_check_last_gap(map_t *map, void *vaddr,
+        unsigned int size);
 static void* mymap_get_unmapped_area(map_t *map, void *vaddr, unsigned int size,
         map_region_t **after, map_region_t **before);
 static unsigned long mymap_get_gap_size(map_region_t *region,
@@ -181,64 +188,152 @@ static void mymap_destroy_region(map_region_t *region) {
     MYMAP_FREE(region);
 }
 
+static inline void* mymap_check_last_gap(map_t *map, void *vaddr,
+        unsigned long size) {
+    void *gap_start;
+
+    if (map == NULL) return MYMAP_FAILED;
+
+    gap_start = MYMAP_VA_END - map->last_gap + 1;
+
+    if (gap_start > vaddr && map->last_gap > size) {
+        return gap_start;
+    } else if (gap_start <= vaddr && (MYMAP_VA_END - vaddr + 1) > size) {
+        return vaddr;
+    } else {
+        return MYMAP_FAILED;
+    }
+}
+
 static void* mymap_get_unmapped_area(map_t *map, void *vaddr, unsigned int size,
         map_region_t **after, map_region_t **before) {
-    map_region_t *curr, *next;
-    void *start;
 
-    if (RB_EMPTY(&map->rb_tree)) return NULL;
+    /* TODO: Check parameters */
+    /* TODO: Check if tree is empty */
+    /* TODO: Check max_gap of the root */
 
-    /* If suggested address was provided, find first unused area starting after
-     * or containing this address */
-    if (vaddr != NULL) {
+    rb_node_t *curr = map->rb_tree->root;
 
-        /* Search for provided virtual address in the tree of mapped regions */
-        int result;
-        rb_node_t *n;
-        n = rb_search(&map->rb_tree, vaddr, mymap_belongs_to_region, &result);
-
-        if (result < 0) {
-            /* Virtual address is located before returned region. There's
-             * a chance that we'll be able to fit new region before it.
-             * Move back to the previous region. */
-            next = RB_ELEMENT(n, map_region_t);
-            curr = RB_ELEMENT(rb_previous(n), map_region_t);
-
-        } else {
-            curr = RB_ELEMENT(n, map_region_t);
-            next = RB_ELEMENT(rb_next(n), map_region_t);
-        }
-
-    } else {
-        /* Start with area before first region */
-        curr = NULL;
-        next = RB_ELEMENT(rb_first(&map->rb_tree), map_region_t);
-    }
-
-    /* Move forward until we find an area big enough */
+    /* In the first phase we analyze parts of the tree where we have to watch
+     * out both for maximum gap size in subtree and suggested virtual address */
     while (true) {
+        map_region_t *region = RB_ELEMENT(curr, map_region_t);
+        int result = mymap_belongs_to_region(vaddr, region);
+        if (result < 0) { /* vaddr is before the current region */
 
-        if (curr == NULL && next == NULL) {
-            /* We have reached the end of the address space and haven't found
-             * appropriate region */
-            return MYMAP_FAILED;
-        }
+            if (curr->left == NULL) {
 
-        /* Check if the gap between the regions is big enough */
-        if (mymap_get_gap_size(curr, next, vaddr, &start) >= size)
+                /* There is no left subtree. Check if we can insert new region
+                 * before the current one */
+                map_region_t *tmp = RB_ELEMENT(curr->left, map_region_t);
+                if (tmp->gap >= size && (tmp->vaddr - vaddr) >= size) {
+                    return vaddr;
+                } else {
+                    /*  Won't fit here. Go to the second phase. */
+                    break;
+                }
+
+            /* Check if any gap in the left subtree is big enough */
+            } else if (RB_MAX_GAP(curr->left) >= size) {
+                curr = curr->left;
+
+            } else {
+                /* Won't fit into this subtree. Go to the seconds phase. */
+                break;
+            }
+
+        } else if (result == 0) {
+
+            /* vaddr is inside the current region. Move to the next element and
+             * go to the second phase. If no such an element exists, check if we
+             * can place new region after current one (and the last at the same
+             * time). */
+            rb_node_t *next = rb_next(curr);
+            if (next == NULL)
+                return mymap_check_last_gap(map, vaddr, size);
+            curr = next;
             break;
 
-        /* Move to the next region */
-        curr = next;
-        next = RB_ELEMENT(rb_next(curr->rb_node), map_region_t);
+        } else { /* vaddr is after the current region */
+
+            if (curr->right == NULL) {
+
+                /* There is no right subtree. Move to the next element and go to
+                 * the second phase. If no such an element exists, check the
+                 * last gap. */
+                rb_node_t *next = rb_next(curr);
+                if (next == NULL)
+                    return mymap_check_last_gap(map, vaddr, size);
+                curr = next;
+                break;
+
+            /* Check if right subtree looks promising */
+            } else if (RB_MAX_GAP(curr->right) < size) {
+
+                /* Move to the next element skipping whole right subtree and go
+                 * to the second phase. If such element doesn't exist, check the
+                 * last gap. */
+                rb_node_t *tmp = rb_subtree_next(curr);
+                if (tmp == NULL)
+                    return mymap_check_last_gap(map, vaddr, size);
+                curr = tmp;
+                break;
+            }
+
+            /* Look deeper into the right subtree */
+            curr = curr->right;
+        }
     }
 
-    /* Return pointer to the regions before and after gap if requested */
-    if (after != NULL) *after = curr;
-    if (before != NULL) *before = next;
+    /* In second phase we no longer have to worry about the suggested virtual
+     * address, since in the previous part we made sure that is located before
+     * the current region. */
+    while (true) {
 
-    /* Return address of the beginning of the area */
-    return start;
+        /* Check if gap before current element is big enough */
+        unsigned long gap_start = RB_VADDR(curr) - RB_GAP(curr);
+        if (gap_start > vaddr && RB_GAP(curr) > size) {
+            return gap_start;
+        } else if (gap_start <= vaddr && (RB_VADDR(curr) - vaddr) > size) {
+            return vaddr;
+        }
+
+        /* Check if there is a gap big enough in the right subtree */
+        if (curr->right && RB_MAX_GAP(curr->right) > size) {
+
+            curr = curr->right;
+            while (true) {
+
+                /* We want to get as close to suggested address as possible and
+                 * therefore we should start with left subtree */
+                if (curr->left && RB_MAX_GAP(curr->left) > size) {
+                    curr = curr->left;
+
+                /* Check current element */
+                } else if (RB_GAP(curr) > size) {
+                    return RB_VADDR(curr) - RB_GAP(curr);
+
+                /* Check right subtree as a last resort */
+                } else if (curr->right && RB_MAX_GAP(curr->left) > size) {
+                    curr = curr->right;
+
+                } else {
+                    /* Should never happen unless tree is broken */
+                    return MYMAP_FAILED;
+                }
+            }
+        }
+
+        /* Move to the next element skipping whole right subtree and go
+         * to the second phase. If such element doesn't exist, check the
+         * last gap. */
+        rb_node_t *tmp = rb_subtree_next(curr);
+        if (tmp == NULL)
+            return mymap_check_last_gap(map, vaddr, size);
+        curr = tmp;
+    }
+
+    return NULL;
 }
 
 static unsigned long mymap_get_gap_size(map_region_t *region,

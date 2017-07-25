@@ -22,7 +22,6 @@ static int _rb_print_subtree(rb_node_t *subtree,
 static int rb_left_rotate(rb_tree_t *t, rb_node_t *node);
 static int rb_right_rotate(rb_tree_t *t, rb_node_t *node);
 static int rb_transplant(rb_tree_t *t, rb_node_t *u, rb_node_t *v);
-static rb_node_t* rb_minimum(rb_node_t *node);
 static int rb_delete_fixup(rb_tree_t *t, rb_node_t *node);
 
 /* Exported functions ------------------------------------------------------- */
@@ -186,9 +185,15 @@ rb_node_t* rb_next(rb_node_t *node) {
         return node;
     }
 
-    /* Right subtree is empty. Go up until we find a node that is a left
-     * child of it's parent. Parent of such a node is the one we're looking
-     * for. */
+    /* Right subtree is empty, so we'll have to look above */
+    return rb_subtree_next(node);
+}
+
+rb_node_t* rb_subtree_next(rb_node_t *subtree) {
+    rb_node_t *node = subtree;
+
+    /* Go up until we find a node that is a left child of it's parent. Parent of
+     * such a node is the one we're looking for. */
     while (node->parent != NULL && node->parent->right == node) {
         node = node->parent;
     }
@@ -253,6 +258,24 @@ rb_node_t* rb_search(rb_tree_t *t, void *key, int (*compare)(void*, void*),
 
 int rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element)) {
     return _rb_print_subtree(subtree, print_element, "", false);
+}
+
+rb_node_t* rb_minimum(rb_node_t *node) {
+
+    if (node == NULL) return NULL;
+
+    while (node->left != NULL) node = node->left;
+
+    return node;
+}
+
+rb_node_t* rb_maximum(rb_node_t *node) {
+
+    if (node == NULL) return NULL;
+
+    while (node->right != NULL) node = node->right;
+
+    return node;
 }
 
 /* Private functions -------------------------------------------------------- */
@@ -405,15 +428,6 @@ static int rb_transplant(rb_tree_t *t, rb_node_t *u, rb_node_t *v) {
     v->parent = u->parent;
 
     return RB_OK;
-}
-
-static rb_node_t* rb_minimum(rb_node_t *node) {
-
-    if (node == NULL) return NULL;
-
-    while (node->left != NULL) node = node->left;
-
-    return node;
 }
 
 static int rb_delete_fixup(rb_tree_t *t, rb_node_t *node) {

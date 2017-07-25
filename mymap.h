@@ -44,10 +44,14 @@ struct map_region_s {
     void *vend; /* Virtual address of the first byte after the region */
     unsigned int flags; /* Memory region flags */
     rb_node_t *rb_node; /* Node of a red-black tree this region is stored in */
+    unsigned long gap; /* Gap before this region */
+    unsigned long max_gap; /* Largest unmapped area in the subtree */
 };
 
 typedef struct {
     rb_tree_t rb_tree; /* Red-black tree of mapped areas */
+    unsigned long last_gap; /* Size of the area between the last region and the
+                             * end of the address space */
 } map_t;
 
 /* Exported functions ------------------------------------------------------- */

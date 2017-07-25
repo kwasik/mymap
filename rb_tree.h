@@ -26,7 +26,8 @@
 /* Exported macros and definitions ------------------------------------------ */
 #define RB_EMPTY(tree)          ((tree)->root == NULL)
 
-#define RB_ELEMENT(node, type)  (node != NULL)?((type*)node->element):(NULL)
+#define RB_ELEMENT(node, type)                                              \
+    (node != NULL)?((type*)node->element):((type*)NULL)
 
 #define RB_LINK_LEFT(_parent, _child)                                       \
     _parent->left = _child;                                                 \
@@ -105,6 +106,14 @@ rb_node_t* rb_first(rb_tree_t *t);
 rb_node_t* rb_next(rb_node_t *node);
 
 /**
+ * Returns next node after the last one in the subtree in depth-first in-order
+ * traversal.
+ * @param subtree Pointer to the root of the subtree
+ * @return Pointer to the next node or NULL if there is no such node
+ */
+rb_node_t* rb_subtree_next(rb_node_t *subtree);
+
+/**
  * Returns previous node in depth-first in-order traversal.
  * @param node Current node
  * @return Pointer to the previous node or NULL if current node is the first
@@ -136,3 +145,17 @@ rb_node_t* rb_search(rb_tree_t *t, void *key, int (*compare)(void*, void*),
  * @return Returns zero on success and error code otherwise
  */
 int rb_print_subtree(rb_node_t *subtree, void (print_element)(void *element));
+
+/**
+ * Finds node with the lowest key in the subtree
+ * @param root Pointer to the root of the subtree
+ * @return Pointer to the node holding minimum value
+ */
+rb_node_t* rb_minimum(rb_node_t *root);
+
+/**
+ * Finds node with the highest key in the subtree
+ * @param root Pointer to the root of the subtree
+ * @return Pointer to the node holding maximum value
+ */
+rb_node_t* rb_maximum(rb_node_t *root);
