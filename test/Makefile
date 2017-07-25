@@ -12,7 +12,7 @@ LDFLAGS =
 PROJECT = test
 
 # Main directory
-MAIN_DIR = ../..
+MAIN_DIR = ..
 
 # Build directory
 BUILDDIR = build

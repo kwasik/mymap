@@ -31,8 +31,6 @@ static inline void* mymap_check_last_gap(map_t *map, void *vaddr,
         unsigned long size);
 static void* mymap_get_unmapped_area(map_t *map, void *vaddr,
         unsigned int size);
-static bool mymap_insert_region(map_region_t *new, map_region_t *after,
-        map_region_t *before);
 static void mymap_print_region(void *element);
 
 /* Exported functions ------------------------------------------------------- */
@@ -96,15 +94,9 @@ void *mymap_mmap(map_t *map, void *vaddr, unsigned int size, unsigned int flags,
 
         /* Get region located before unmapped area fulfilling all
          * requirements*/
-        map_region_t *prev, *next;
-        region->vaddr = mymap_get_unmapped_area(map, vaddr, size, &next, &prev);
+        region->vaddr = mymap_get_unmapped_area(map, vaddr, size);
 
-        /* Try to insert new region */
-        if (region->vaddr == MYMAP_FAILED ||
-                !mymap_insert_region(region, prev, next)) {
-            mymap_destroy_region(region); /* Clean up */
-            return MYMAP_FAILED;
-        }
+        /* TODO: Insert new region */
     }
 
     /* Calculate the end of the region */
@@ -209,7 +201,7 @@ static void* mymap_get_unmapped_area(map_t *map, void *vaddr,
 
     if (map == NULL) return MYMAP_FAILED;
 
-    if (RB_EMPTY(map->rb_tree) || RB_MAX_GAP(map->rb_tree.root) < size)
+    if (RB_EMPTY(&map->rb_tree) || RB_MAX_GAP(map->rb_tree.root) < size)
         /* If tree is empty or maximum gap size at the root is smaller than
          * requested size, then the last gap is our only chance */
         return mymap_check_last_gap(map, vaddr, size);
@@ -340,26 +332,6 @@ static void* mymap_get_unmapped_area(map_t *map, void *vaddr,
     }
 
     return NULL;
-}
-
-static bool mymap_insert_region(map_region_t *new, map_region_t *after,
-        map_region_t *before) {
-
-    if (after == NULL && before == NULL) return false;
-
-    if (after && after->rb_node && after->rb_node->right == NULL) {
-        RB_LINK_RIGHT(after->rb_node, new->rb_node);
-
-    } else if (before && before->rb_node && before->rb_node->left == NULL) {
-        RB_LINK_LEFT(before->rb_node, new->rb_node);
-
-    } else {
-        /* Can happen only if the area where we're trying to insert new region
-         * is not empty (which, of course, should never happen) */
-        return false;
-    }
-
-    return true;
 }
 
 static void mymap_print_region(void *element) {
