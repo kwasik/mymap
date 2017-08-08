@@ -89,11 +89,11 @@ Press any key to run tests...
   31      0x18c       1670   0xffffffffffffffff   0xffffffffffffffff
   32      0x888        374   0xffffffffffffffff   0xffffffffffffffff
   ```
-  First part show what layout of the virtual memory looks like, where:
+  First part shows what layout of the virtual memory looks like, where:
   `vstart` - beginning of the region (first byte)
   `vend` - end of the region (first byte AFTER the region)
   `gap` - size of the gap (unused area) beffore the region
   
-  Second part show the structure of the tree used to store mapped regions. `max_gap` is the size of the biggest gap in the subtree (including the root of the subtree where the information is stored).
+  Second part shows the structure of the tree used to store mapped regions. `max_gap` is the size of the biggest gap in the subtree (including the root of the subtree where the information is stored).
   
   Finally, the third part shows the results of the tests. Each part consists of comparing results of two methods of finding unmapped areas - one using array to store region descriptors (function called `_get_unmapped_area`) and one using tree (`mymap_get_unmapped_area`). Results of both methods, suggested virtual address, size and the number of test are displayed in table.
